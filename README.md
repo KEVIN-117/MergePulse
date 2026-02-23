@@ -1,135 +1,122 @@
-# Turborepo starter
+# MergePulse
 
-This Turborepo starter is maintained by the Turborepo core team.
+![MergePulse Banner](MergePulse.png)
 
-## Using this example
+> **Transforma la gestión de Pull Requests en un sistema observable, medible y optimizable.**
 
-Run the following command:
+MergePulse es un Micro-SaaS de analítica y revisión inteligente diseñado para startups tecnológicas que utilizan GitHub. Proporciona métricas de productividad claras, rankings de contribución y, crucialmente, un sistema de **revisión automática de código impulsado por IA** bajo demanda.
 
-```sh
-npx create-turbo@latest
-```
+El objetivo es aumentar la transparencia, mejorar la calidad del código y reducir drásticamente los tiempos de "Code Review" sin añadir fricción al flujo de trabajo existente.
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+## 🚀 Características Principales (MVP)
 
-### Apps and Packages
+* **📊 Dashboard de Productividad:** Visualiza en tiempo real el flujo de trabajo de tu equipo con métricas de PRs abiertas, cerradas y mergeadas por día/mes.
+* **🤖 Revisión de Código con IA:** Solicita una revisión instantánea de cualquier PR. Un potente LLM analiza el *diff*, busca bugs, problemas de seguridad y violaciones de estilo, otorgando un "Quality Score" (0-100).
+* **🏆 Ranking de Desarrolladores:** Sistema de puntuación gamificado basado en la actividad de PRs para visibilizar las contribuciones más impactantes.
+* **🏢 Arquitectura Multi-Tenant:** Diseñado desde el inicio para soportar múltiples organizaciones con aislamiento lógico de datos.
+* **⚡ Integración Nativa con GitHub App:** Instalación sin fricción y actualizaciones en tiempo real mediante Webhooks seguros.
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+---
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## 🛠️ Stack Tecnológico y Arquitectura
 
-### Utilities
+MergePulse utiliza una arquitectura moderna y escalable basada en un **Monorepo**.
 
-This Turborepo has some additional tools already setup for you:
+| Capa | Tecnología | Descripción |
+| :--- | :--- | :--- |
+| **Frontend** | Next.js (App Router) | Dashboard interactivo, visualización de datos con Recharts y estilizado con Tailwind CSS. |
+| **Backend** | NestJS (Node.js) | API REST modular. Maneja la lógica de negocio, autenticación y webhooks. |
+| **Base de Datos**| PostgreSQL + Prisma ORM | Almacenamiento relacional robusto con esquema tipado para gestión multi-tenant. |
+| **Cola & Caché**| Redis + BullMQ | Gestión de trabajos asíncronos (Workers) para el procesamiento pesado de la IA. |
+| **Infraestructura**| Docker & Docker Compose| Entorno de desarrollo y despliegue contenerizado y reproducible. |
+| **Integración** | GitHub Apps & Webhooks | Conexión segura para leer código y recibir eventos en tiempo real. |
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+### Diagrama de Alto Nivel
 
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+```mermaid
+graph TD
+    GH[GitHub] -- Webhooks --> API[NestJS API Gateway]
+    Client[Next.js Frontend] -- REST/JWT --> API
+    API -- Lee/Escribe --> DB[(PostgreSQL)]
+    API -- Encola Jobs --> Redis[(Redis Queue)]
+    Redis -- Procesa Jobs --> Worker[NestJS Worker Process]
+    Worker -- 1. Obtiene Diff --> GH
+    Worker -- 2. Analiza Código --> LLM[Proveedor IA (e.g., Claude/OpenAI)]
+    Worker -- 3. Guarda Resultados --> DB
 
 ```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+## 🏁 Empezando en Local
 
-### Develop
+Sigue estos pasos para levantar el entorno de desarrollo completo usando Docker.
 
-To develop all apps and packages, run the following command:
+### Requisitos Previos
 
-```
-cd my-turborepo
+* Docker y Docker Compose instalados.
+* Node.js (Versión LTS, ej. v20+) y npm/pnpm.
+* Una **GitHub App** creada y configurada (necesitarás el ID, Private Key y Webhook Secret).
+* Una API Key de tu proveedor de IA (OpenAI o Anthropic).
 
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+### Instalación
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+1. **Clonar el repositorio:**
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+```bash
+git clone [https://github.com/tu-usuario/mergepulse.git](https://github.com/tu-usuario/mergepulse.git)
+cd mergepulse
 
 ```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+1. **Configurar Variables de Entorno:**
 
-### Remote Caching
+Crea un archivo `.env` en la raíz basado en el ejemplo (asegúrate de llenar tus credenciales de GitHub y IA):
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+```bash
+cp .env.example .env
 
 ```
-cd my-turborepo
 
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
+1. **Levantar la Infraestructura (BD y Redis):**
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+```bash
+docker-compose up -d postgres redis
 
 ```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+1. **Instalar dependencias y preparar la Base de Datos:**
+
+```bash
+npm install
+# Ejecutar migraciones de Prisma
+npx prisma migrate dev --name init
+
 ```
 
-## Useful Links
+1. **Ejecutar los servicios (Frontend y Backend) en modo desarrollo:**
 
-Learn more about the power of Turborepo:
+```bash
+npm run dev
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+```
+
+* El **Frontend** estará disponible en `http://localhost:3000`
+* La **API** estará disponible en `http://localhost:3001`
+* *(Opcional)* Para recibir webhooks en local, usa una herramienta como `ngrok` para exponer tu puerto 3001.
+
+---
+
+## 🔮 Roadmap
+
+El desarrollo actual se centra en la Fase 1 (MVP).
+
+* [x] **Fase 1: Fundamentos (Actual)** - Autenticación GitHub, Webhooks básicos, Dashboard inicial, Motor de revisión IA manual.
+* [ ] **Fase 2: Métricas Avanzadas** - Tiempo promedio de merge (Cycle Time), tamaño de PRs, exportación de reportes CSV.
+* [ ] **Fase 3: Integraciones & Pro** - Notificaciones en Slack/Discord, sistema de facturación (Stripe) y límites de plan.
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la licencia [MIT](https://www.google.com/search?q=LICENSE).
