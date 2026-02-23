@@ -48,62 +48,113 @@ graph TD
 
 ```
 
-## 🏁 Empezando en Local
+## 📁 Project Structure
 
-Sigue estos pasos para levantar el entorno de desarrollo completo usando Docker.
-
-### Requisitos Previos
-
-* Docker y Docker Compose instalados.
-* Node.js (Versión LTS, ej. v20+) y npm/pnpm.
-* Una **GitHub App** creada y configurada (necesitarás el ID, Private Key y Webhook Secret).
-* Una API Key de tu proveedor de IA (OpenAI o Anthropic).
-
-### Instalación
-
-1. **Clonar el repositorio:**
-
-```bash
-git clone [https://github.com/tu-usuario/mergepulse.git](https://github.com/tu-usuario/mergepulse.git)
-cd mergepulse
+This project is organized as a **Turborepo monorepo** using pnpm workspaces:
 
 ```
+MergePulse/
+├── apps/
+│   ├── web/          # Next.js frontend (App Router, Tailwind CSS)
+│   ├── backend/      # NestJS REST API
+│   └── docs/         # Documentation site
+├── packages/
+│   ├── ui/           # Shared UI component library
+│   ├── eslint-config/        # Shared ESLint configuration
+│   └── typescript-config/    # Shared TypeScript configuration
+├── docker-compose.yml        # PostgreSQL & Redis for local development
+├── turbo.json                # Turborepo task pipeline configuration
+└── pnpm-workspace.yaml       # pnpm workspace definition
+```
 
-1. **Configurar Variables de Entorno:**
+## 🏁 Getting Started Locally
 
-Crea un archivo `.env` en la raíz basado en el ejemplo (asegúrate de llenar tus credenciales de GitHub y IA):
+Follow these steps to set up the full development environment.
+
+### Prerequisites
+
+| Tool | Minimum Version |
+|---|---|
+| [Node.js](https://nodejs.org/) | ≥ 18 (LTS recommended) |
+| [pnpm](https://pnpm.io/) | ≥ 9.0.0 |
+| [Docker](https://www.docker.com/) & Docker Compose | Latest stable |
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/KEVIN-117/MergePulse.git
+cd MergePulse
+```
+
+### 2. Configure Environment Variables
+
+Copy the example file and adjust values if needed:
 
 ```bash
 cp .env.example .env
-
 ```
 
-1. **Levantar la Infraestructura (BD y Redis):**
+The defaults work out of the box for local development. See `.env.example` for all available variables.
+
+### 3. Start Infrastructure (PostgreSQL & Redis)
 
 ```bash
-docker-compose up -d postgres redis
-
+docker compose up -d
 ```
 
-1. **Instalar dependencias y preparar la Base de Datos:**
+This starts:
+
+| Service | Port | Description |
+|---|---|---|
+| **PostgreSQL** | `5432` | Relational database |
+| **Redis** | `6379` | Queue & cache (BullMQ) |
+
+To verify the services are running:
 
 ```bash
-npm install
-# Ejecutar migraciones de Prisma
-npx prisma migrate dev --name init
-
+docker compose ps
 ```
 
-1. **Ejecutar los servicios (Frontend y Backend) en modo desarrollo:**
+### 4. Install Dependencies
 
 ```bash
-npm run dev
-
+pnpm install
 ```
 
-* El **Frontend** estará disponible en `http://localhost:3000`
-* La **API** estará disponible en `http://localhost:3001`
-* *(Opcional)* Para recibir webhooks en local, usa una herramienta como `ngrok` para exponer tu puerto 3001.
+### 5. Run in Development Mode
+
+```bash
+pnpm dev
+```
+
+| App | URL | Source |
+|---|---|---|
+| **Frontend (Next.js)** | http://localhost:3001 | `apps/web` |
+| **Backend (NestJS)** | http://localhost:3002 | `apps/backend` |
+
+### Available Scripts
+
+All scripts are run from the **repository root** via Turborepo:
+
+| Command | Description |
+|---|---|
+| `pnpm dev` | Start all apps in watch/development mode |
+| `pnpm build` | Build all apps and packages |
+| `pnpm lint` | Lint all apps and packages |
+| `pnpm format` | Format files with Prettier |
+| `pnpm check-types` | Run TypeScript type checking |
+
+### Stopping Infrastructure
+
+```bash
+docker compose down
+```
+
+To also remove persisted data volumes:
+
+```bash
+docker compose down -v
+```
 
 ---
 
