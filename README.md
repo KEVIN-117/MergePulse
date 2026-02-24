@@ -115,6 +115,95 @@ El desarrollo actual se centra en la Fase 1 (MVP).
 * [ ] **Fase 2: Métricas Avanzadas** - Tiempo promedio de merge (Cycle Time), tamaño de PRs, exportación de reportes CSV.
 * [ ] **Fase 3: Integraciones & Pro** - Notificaciones en Slack/Discord, sistema de facturación (Stripe) y límites de plan.
 
+## Estructura de carpetas
+
+### Backend
+
+```plaintext
+apps/backend/src/
+├── common/                  # Cosas compartidas y genéricas
+│   ├── decorators/          # @CurrentUser(), @Public()
+│   ├── guards/              # JwtAuthGuard, GithubWebhookGuard
+│   ├── filters/             # Manejo global de errores
+│   └── utils/               # Funciones helper puras
+│
+├── config/                  # Configuración de entorno (env vars)
+│   └── env.validation.ts    # Validación con Joi/Zod
+│
+├── modules/                 # EL CORAZÓN DE TU APP (Feature Modules)
+│   ├── auth/                # Login, JWT, Estrategias Passport
+│   │   ├── strategies/
+│   │   ├── auth.controller.ts
+│   │   └── auth.service.ts
+│   │
+│   ├── github/              # Integración con GitHub
+│   │   ├── webhooks/        # Controlador de Webhooks
+│   │   └── client/          # Servicio para llamar a la API de GitHub
+│   │
+│   ├── ai-reviewer/         # El cerebro (BullMQ + OpenAI/Claude)
+│   │   ├── queues/          # Productores de eventos
+│   │   ├── workers/         # Procesadores (Consumers)
+│   │   └── ai.service.ts    # Lógica de prompts
+│   │
+│   ├── metrics/             # Endpoints de Dashboard y Ranking
+│   │
+│   ├── organizations/       # CRUD y gestión multi-tenant
+│   │
+│   └── pull-requests/       # Gestión de PRs (lectura/escritura DB)
+│
+├── prisma/                  # Módulo de base de datos
+│   ├── prisma.service.ts    # Conexión única
+│   └── prisma.module.ts
+│
+├── app.module.ts            # Importa todos los módulos anteriores
+└── main.ts                  # Punto de entrada
+```
+
+### Frontend
+
+```plaintext
+apps/web/
+├── app/                      # SOLO Rutas y Layouts (El esqueleto)
+│   ├── (auth)/               # Agrupación de rutas (login, callback)
+│   ├── dashboard/            # Ruta principal
+│   │   └── page.tsx          # "Pega" los componentes de la carpeta features
+│   ├── prs/
+│   │   ├── [id]/
+│   │   │   └── page.tsx
+│   └── layout.tsx            # Layout global (Providers)
+│
+├── components/               # UI "Tonta" y Genérica (Design System)
+│   ├── ui/                   # Aquí vive shadcn (Button, Card, Input...)
+│   ├── layouts/              # Sidebar, Navbar, Footer
+│   └── icons/                # Iconos específicos si no usas lucide-react
+│
+├── features/                 # EL CEREBRO (Componentes inteligentes por dominio)
+│   ├── auth/
+│   │   ├── components/       # LoginForm.tsx, AuthGuard.tsx
+│   │   └── hooks/            # useAuth.ts
+│   │
+│   ├── dashboard/            # Todo lo del dashboard
+│   │   ├── components/       # RankingTable.tsx, ActivityChart.tsx
+│   │   └── hooks/            # useDashboardMetrics.ts
+│   │
+│   ├── ai-review/            # Todo lo relacionado a la IA
+│   │   ├── components/       # ReviewButton.tsx, IssuesList.tsx, ScoreCard.tsx
+│   │   └── api/              # review-api.ts (llamadas específicas)
+│   │
+│   └── prs/
+│       └── components/       # PrStatusBadge.tsx, PrDiffViewer.tsx
+│
+├── lib/                      # Configuración y Utilidades
+│   ├── api.ts                # Tu cliente Axios configurado (Interceptor JWT)
+│   └── utils.ts              # Helpers de clases (cn de tailwind)
+│
+├── hooks/                    # Hooks globales (no de negocio)
+│   ├── use-mobile.ts
+│   └── use-toast.ts
+│
+└── types/                    # Tipos compartidos
+```
+
 ---
 
 ## 📄 Licencia
