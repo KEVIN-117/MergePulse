@@ -7,6 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// --- UTILIDADES ---
+
 enum JobStatus {
   PENDING
   RUNNING
@@ -28,15 +30,128 @@ model JobAudit {
   payload      Json?
   status       JobStatus @default(PENDING)
   failedReason String?
+  
+  // Relación con PR (Un Job pertenece a una PR)
+  pullRequestId String   @map("pull_request_id")
+  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id])
+
   createdAt    DateTime  @default(now())
   startedAt    DateTime?
   completedAt  DateTime?
+
+  @@map("job_audits")
+  @@index([pullRequestId, createdAt])
 }
 
+// --- DOMINIO PRINCIPAL ---
+
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                   String       @id @default(uuid())
+  name                 String
+  githubInstallationId String       @unique @map("github_installation_id")
+  plan                 Plan         @default(FREE)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  users                User[]
+  repositories         Repository[]
+  pullRequests         PullRequest[]
+}
+
+model User {
+  id             String       @id @default(uuid())
+  githubUsername String       @unique @map("github_username")
+  role           UserRole     @default(DEVELOPER)
+  
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  // Relación inversa necesaria para que Prisma funcione
+  pullRequests   PullRequest[] 
+  
+  createdAt      DateTime     @default(now())
+}
+
+model Repository {
+  id             String        @id @default(uuid())
+  githubRepoId   String        @unique @map("github_repo_id")
+  name           String
+  
+  organizationId String        @map("organization_id")
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  
+  pullRequests   PullRequest[]
+}
+
+model PullRequest {
+  id             String       @id @default(uuid())
+  githubPrId     String       @unique @map("github_pr_id")
+  
+  number         Int          // Ya no es @unique globalmente
+  title          String?
+  status         PrStatus     @default(OPEN)
+  
+  repositoryId   String       @map("repository_id")
+  repository     Repository   @relation(fields: [repositoryId], references: [id])
+  
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  // Autor vinculado a un Usuario del sistema
+  authorId       String       @map("author_id")
+  author         User         @relation(fields: [authorId], references: [id])
+  
+  // Relaciones inversas
+  reviews        AiReview[]
+  jobAudits      JobAudit[]
+
+  createdAt      DateTime     @default(now())
+  closedAt       DateTime?
+  mergedAt       DateTime?
+
+  // Unicidad compuesta: El número de PR es único SOLO dentro de su repositorio
+  @@unique([repositoryId, number])
+  
+  // Índices corregidos
+  @@index([organizationId, createdAt])
+  @@index([organizationId, authorId])
+}
+
+model AiReview {
+  id            String       @id @default(uuid())
+  pullRequestId String       @map("pull_request_id")
+  status        ReviewStatus @default(PENDING)
+  score         Int?
+  summary       String?      @db.Text
+  issues        Json?        
+  
+  pullRequest   PullRequest  @relation(fields: [pullRequestId], references: [id])
+  
+  startedAt     DateTime?
+  completedAt   DateTime?
+}
+
+// --- ENUMS ---
+
+enum UserRole {
+  ADMIN
+  DEVELOPER
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum PrStatus {
+  OPEN
+  CLOSED
+  MERGED
+}
+
+enum ReviewStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
