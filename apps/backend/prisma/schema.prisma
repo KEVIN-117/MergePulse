@@ -21,6 +21,8 @@ model AppSetting {
   value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("app_settings")
 }
 
 model JobAudit {
@@ -32,8 +34,8 @@ model JobAudit {
   failedReason String?
   
   // Relación con PR (Un Job pertenece a una PR)
-  pullRequestId String   @map("pull_request_id")
-  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id])
+  pullRequestId String?   @map("pull_request_id")
+  pullRequest   PullRequest? @relation(fields: [pullRequestId], references: [id])
 
   createdAt    DateTime  @default(now())
   startedAt    DateTime?
@@ -48,6 +50,7 @@ model JobAudit {
 model Organization {
   id                   String       @id @default(uuid())
   name                 String
+  slug                 String       @unique
   githubInstallationId String       @unique @map("github_installation_id")
   plan                 Plan         @default(FREE)
   createdAt            DateTime     @default(now())
@@ -56,6 +59,7 @@ model Organization {
   users                User[]
   repositories         Repository[]
   pullRequests         PullRequest[]
+  @@map("organizations")
 }
 
 model User {
@@ -70,6 +74,9 @@ model User {
   pullRequests   PullRequest[] 
   
   createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  @@index([organizationId])
+  @@map("users")
 }
 
 model Repository {
@@ -81,6 +88,10 @@ model Repository {
   organization   Organization  @relation(fields: [organizationId], references: [id])
   
   pullRequests   PullRequest[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  @@index([organizationId])
+  @@map("repositories")
 }
 
 model PullRequest {
@@ -115,6 +126,7 @@ model PullRequest {
   // Índices corregidos
   @@index([organizationId, createdAt])
   @@index([organizationId, authorId])
+  @@map("pull_requests")
 }
 
 model AiReview {
@@ -129,6 +141,12 @@ model AiReview {
   
   startedAt     DateTime?
   completedAt   DateTime?
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([pullRequestId, status])
+  @@map("ai_reviews")
 }
 
 // --- ENUMS ---
