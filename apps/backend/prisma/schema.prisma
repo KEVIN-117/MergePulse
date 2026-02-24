@@ -21,6 +21,8 @@ model AppSetting {
   value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("app_settings")
 }
 
 model JobAudit {
@@ -56,6 +58,8 @@ model Organization {
   users                User[]
   repositories         Repository[]
   pullRequests         PullRequest[]
+
+  @@map("organizations")
 }
 
 model User {
@@ -70,6 +74,8 @@ model User {
   pullRequests   PullRequest[] 
   
   createdAt      DateTime     @default(now())
+
+  @@map("users")
 }
 
 model Repository {
@@ -81,6 +87,8 @@ model Repository {
   organization   Organization  @relation(fields: [organizationId], references: [id])
   
   pullRequests   PullRequest[]
+
+  @@map("repositories")
 }
 
 model PullRequest {
@@ -115,6 +123,7 @@ model PullRequest {
   // Índices corregidos
   @@index([organizationId, createdAt])
   @@index([organizationId, authorId])
+  @@map("pull_requests")
 }
 
 model AiReview {
@@ -129,6 +138,8 @@ model AiReview {
   
   startedAt     DateTime?
   completedAt   DateTime?
+
+  @@map("ai_reviews")
 }
 
 // --- ENUMS ---
