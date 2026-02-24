@@ -1,0 +1,107 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mergepulse-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mergepulse}
+      POSTGRES_USER: ${POSTGRES_USER:-mergepulse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mergepulse}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mergepulse} -d ${POSTGRES_DB:-mergepulse}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mergepulse-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: mergepulse-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mergepulse}:${POSTGRES_PASSWORD:-mergepulse}@postgres:5432/${POSTGRES_DB:-mergepulse}?schema=public
+      REDIS_URL: redis://redis:6379
+    command: >
+      sh -c "pnpm --filter backend run prisma:migrate:deploy &&
+      pnpm --filter backend run prod"
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+
+  backend-worker:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: mergepulse-backend-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mergepulse}:${POSTGRES_PASSWORD:-mergepulse}@postgres:5432/${POSTGRES_DB:-mergepulse}?schema=public
+      REDIS_URL: redis://redis:6379
+    command: >
+      sh -c "pnpm --filter backend run worker:prod"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: mergepulse-web
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      NEXT_PUBLIC_API_URL: http://backend:3000
+    ports:
+      - "${WEB_PORT:-3001}:3001"
+
+  docs:
+    build:
+      context: .
+      dockerfile: apps/docs/Dockerfile
+    container_name: mergepulse-docs
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+    ports:
+      - "${DOCS_PORT:-3002}:3002"
+
+volumes:
+  postgres-data:
+  redis-data:
