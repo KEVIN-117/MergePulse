@@ -48,6 +48,7 @@ model JobAudit {
 model Organization {
   id                   String       @id @default(uuid())
   name                 String
+  slug                 String       @unique
   githubInstallationId String       @unique @map("github_installation_id")
   plan                 Plan         @default(FREE)
   createdAt            DateTime     @default(now())
