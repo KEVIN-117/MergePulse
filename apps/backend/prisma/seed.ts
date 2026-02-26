@@ -37,7 +37,10 @@ async function main() {
         const result = await prisma.organization.upsert({
             where: { slug: org.slug },
             update: {},
-            create: org,
+            create: {
+                ...org,
+                githubInstallationId: Math.floor(Math.random() * 1000000000).toString(),
+            },
         });
         console.log(`  ✅ Upserted organization: "${result.name}" (${result.id})`);
     }
