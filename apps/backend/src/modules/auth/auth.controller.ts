@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
@@ -34,11 +34,11 @@ export class AuthController {
 
   @Get("/user")
   @UseGuards(AuthGuard('jwt'))
-  async getUser(@Req() req: Request & { id: string }): Promise<User> {
+  async getUser(@Req() req: Request & { user: User }): Promise<User> {
     try {
-      const user = await this.authService.getUser(req.id);
+      const user = await this.authService.getUser(req.user.id);
       if (!user) {
-        throw new Error('User not found');
+        throw new NotFoundException('User not found');
       }
       return user;
     } catch (error) {
