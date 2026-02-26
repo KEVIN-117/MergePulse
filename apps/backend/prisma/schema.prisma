@@ -32,97 +32,104 @@ model JobAudit {
   payload      Json?
   status       JobStatus @default(PENDING)
   failedReason String?
-  
+
   // Relación con PR (Un Job pertenece a una PR)
-  pullRequestId String?   @map("pull_request_id")
+  pullRequestId String?      @map("pull_request_id")
   pullRequest   PullRequest? @relation(fields: [pullRequestId], references: [id])
 
-  createdAt    DateTime  @default(now())
-  startedAt    DateTime?
-  completedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
 
-  @@map("job_audits")
   @@index([pullRequestId, createdAt])
+  @@map("job_audits")
 }
 
 // --- DOMINIO PRINCIPAL ---
 
 model Organization {
-  id                   String       @id @default(uuid())
+  id                   String   @id @default(uuid())
   name                 String
-  slug                 String       @unique
-  githubInstallationId String       @unique @map("github_installation_id")
-  plan                 Plan         @default(FREE)
-  createdAt            DateTime     @default(now())
-  updatedAt            DateTime     @updatedAt
+  slug                 String   @unique
+  githubInstallationId String   @unique @map("github_installation_id")
+  plan                 Plan     @default(FREE)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
-  users                User[]
-  repositories         Repository[]
-  pullRequests         PullRequest[]
+  users        User[]
+  repositories Repository[]
+  pullRequests PullRequest[]
+
   @@map("organizations")
 }
 
 model User {
-  id             String       @id @default(uuid())
-  githubUsername String       @unique @map("github_username")
-  role           UserRole     @default(DEVELOPER)
-  
+  id             String   @id @default(uuid())
+  githubId       String   @unique @map("github_id")
+  githubUsername String   @unique @map("github_username")
+  role           UserRole @default(DEVELOPER)
+  displayName    String?  @map("display_name")
+  avatarUrl      String?  @map("avatar_url")
+  email          String?
+
   organizationId String       @map("organization_id")
   organization   Organization @relation(fields: [organizationId], references: [id])
-  
+
   // Relación inversa necesaria para que Prisma funcione
-  pullRequests   PullRequest[] 
-  
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  pullRequests PullRequest[]
+
+  lastLoginAt DateTime? @default(now()) @map("last_login_at")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@index([organizationId])
   @@map("users")
 }
 
 model Repository {
-  id             String        @id @default(uuid())
-  githubRepoId   String        @unique @map("github_repo_id")
-  name           String
-  
-  organizationId String        @map("organization_id")
-  organization   Organization  @relation(fields: [organizationId], references: [id])
-  
-  pullRequests   PullRequest[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id           String @id @default(uuid())
+  githubRepoId String @unique @map("github_repo_id")
+  name         String
+
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  pullRequests PullRequest[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
   @@index([organizationId])
   @@map("repositories")
 }
 
 model PullRequest {
-  id             String       @id @default(uuid())
-  githubPrId     String       @unique @map("github_pr_id")
-  
-  number         Int          // Ya no es @unique globalmente
-  title          String?
-  status         PrStatus     @default(OPEN)
-  
-  repositoryId   String       @map("repository_id")
-  repository     Repository   @relation(fields: [repositoryId], references: [id])
-  
+  id         String @id @default(uuid())
+  githubPrId String @unique @map("github_pr_id")
+
+  number Int // Ya no es @unique globalmente
+  title  String?
+  status PrStatus @default(OPEN)
+
+  repositoryId String     @map("repository_id")
+  repository   Repository @relation(fields: [repositoryId], references: [id])
+
   organizationId String       @map("organization_id")
   organization   Organization @relation(fields: [organizationId], references: [id])
-  
-  // Autor vinculado a un Usuario del sistema
-  authorId       String       @map("author_id")
-  author         User         @relation(fields: [authorId], references: [id])
-  
-  // Relaciones inversas
-  reviews        AiReview[]
-  jobAudits      JobAudit[]
 
-  createdAt      DateTime     @default(now())
-  closedAt       DateTime?
-  mergedAt       DateTime?
+  // Autor vinculado a un Usuario del sistema
+  authorId String @map("author_id")
+  author   User   @relation(fields: [authorId], references: [id])
+
+  // Relaciones inversas
+  reviews   AiReview[]
+  jobAudits JobAudit[]
+
+  createdAt DateTime  @default(now())
+  closedAt  DateTime?
+  mergedAt  DateTime?
 
   // Unicidad compuesta: El número de PR es único SOLO dentro de su repositorio
   @@unique([repositoryId, number])
-  
   // Índices corregidos
   @@index([organizationId, createdAt])
   @@index([organizationId, authorId])
@@ -135,15 +142,15 @@ model AiReview {
   status        ReviewStatus @default(PENDING)
   score         Int?
   summary       String?      @db.Text
-  issues        Json?        
-  
-  pullRequest   PullRequest  @relation(fields: [pullRequestId], references: [id])
-  
-  startedAt     DateTime?
-  completedAt   DateTime?
+  issues        Json?
 
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id])
+
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([pullRequestId, status])
   @@map("ai_reviews")
