@@ -2,9 +2,8 @@ import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
-// import { AuthResponse } from '../../../../../packages/types/src/auth-response.interface';
-import { AuthResponse } from '@repo/types/auth-response.interface';
-import { GithubAuthUser } from '../../../../../packages/types/src/github-auth-user.interface';
+import { AuthResponse } from './types/auth-response.interface';
+import { GithubAuthUser } from './types/github-auth-user.interface';
 import { User } from '@prisma/client';
 
 @Controller('auth')

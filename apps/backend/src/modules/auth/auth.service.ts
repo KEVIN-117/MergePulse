@@ -6,15 +6,14 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Organization, User } from '@prisma/client';
+import { Organization, User, UserRole } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AuthResponse, UserRole } from '@repo/types/auth-response.interface';
 import {
-  GithubInstallation,
-  GithubInstallationsResponse,
-} from '@repo/types/github-installation.interface';
-import { GithubAuthUser } from '@repo/types/github-auth-user.interface';
-import { SessionJwtPayload } from '@repo/types/session-jwt-payload.interface';
+  AuthResponse
+} from './types/auth-response.interface';
+import { GithubAuthUser } from './types/github-auth-user.interface';
+import { GithubInstallation, GithubInstallationsResponse } from './types/github-installation.interface';
+import { SessionJwtPayload } from './types/session-jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -42,7 +41,7 @@ export class AuthService {
     const accessToken = await this.signSessionJwt({
       userId: user.id,
       orgId: user.organizationId,
-      role: user.role as UserRole,
+      role: user.role,
     });
 
     return {
@@ -52,7 +51,7 @@ export class AuthService {
         id: user.id,
         githubUsername: user.githubUsername,
         organizationId: user.organizationId,
-        role: user.role as UserRole,
+        role: user.role,
       },
     };
   }

@@ -5,7 +5,11 @@
         "rootDir": "."
     },
     "include": [
-        "."
+        ".",
+        "../../apps/backend/src/modules/auth/types/github-auth-user.interface.ts",
+        "../../apps/backend/src/modules/auth/types/github-installation.interface.ts",
+        "../../apps/backend/src/modules/auth/types/session-jwt-payload.interface.ts",
+        "../../apps/backend/src/modules/auth/types/auth-response.interface.ts"
     ],
     "exclude": [
         "node_modules",

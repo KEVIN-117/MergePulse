@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-github2';
-import { GithubAuthUser } from '../../../../../../packages/types/src/github-auth-user.interface';
+import { GithubAuthUser } from '../types/github-auth-user.interface';
 
 interface GithubProfile {
   id?: string;

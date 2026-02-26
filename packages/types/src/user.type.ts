@@ -1,3 +1,8 @@
+export enum UserRole {
+    ADMIN = 'ADMIN',
+    MEMBER = 'MEMBER',
+}
+
 export interface User {
     id: string;
     githubUsername: string;
@@ -5,9 +10,4 @@ export interface User {
     organizationId: string;
     createdAt: Date;
     updatedAt: Date;
-}
-
-export enum UserRole {
-    ADMIN = "ADMIN",
-    DEVELOPER = "DEVELOPER",
 }

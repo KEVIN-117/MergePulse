@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { GithubAuthUser } from '../../../../../packages/types/src/github-auth-user.interface';
+import { GithubAuthUser } from './types/github-auth-user.interface';
 
 describe('AuthController', () => {
   let controller: AuthController;

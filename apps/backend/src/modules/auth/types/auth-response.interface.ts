@@ -1,7 +1,4 @@
-export enum UserRole {
-  ADMIN = 'ADMIN',
-  MEMBER = 'MEMBER',
-}
+import { UserRole } from "@prisma/client";
 
 export interface AuthResponse {
   accessToken: string;

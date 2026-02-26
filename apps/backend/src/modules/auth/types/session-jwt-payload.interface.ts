@@ -1,4 +1,4 @@
-import { UserRole } from './auth-response.interface';
+import { UserRole } from "@prisma/client";
 
 export interface SessionJwtPayload {
   userId: string;
