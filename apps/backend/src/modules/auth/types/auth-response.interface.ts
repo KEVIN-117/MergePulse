@@ -2,11 +2,11 @@ import { UserRole } from "@prisma/client";
 
 export interface AuthResponse {
   accessToken: string;
-  tokenType: 'Bearer';
+  refreshToken: string;
   user: {
     id: string;
     githubUsername: string;
-    organizationId: string;
+    organizationId?: string;
     role: UserRole;
   };
 }

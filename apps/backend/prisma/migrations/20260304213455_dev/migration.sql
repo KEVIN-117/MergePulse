@@ -2,6 +2,9 @@
 CREATE TYPE "JobStatus" AS ENUM ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED');
 
 -- CreateEnum
+CREATE TYPE "Visibility" AS ENUM ('PUBLIC', 'PRIVATE');
+
+-- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'DEVELOPER');
 
 -- CreateEnum
@@ -53,6 +56,17 @@ CREATE TABLE "organizations" (
 );
 
 -- CreateTable
+CREATE TABLE "authorized_apps" (
+    "id" TEXT NOT NULL,
+    "installation_id" TEXT NOT NULL,
+    "organization_id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "authorized_apps_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "github_id" TEXT NOT NULL,
@@ -61,7 +75,7 @@ CREATE TABLE "users" (
     "display_name" TEXT,
     "avatar_url" TEXT,
     "email" TEXT,
-    "organization_id" TEXT NOT NULL,
+    "organization_id" TEXT,
     "last_login_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -74,6 +88,11 @@ CREATE TABLE "repositories" (
     "id" TEXT NOT NULL,
     "github_repo_id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "description" TEXT,
+    "url" TEXT,
+    "stars" INTEGER,
+    "forks" INTEGER,
+    "visibility" "Visibility" NOT NULL DEFAULT 'PUBLIC',
     "organization_id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -124,6 +143,12 @@ CREATE UNIQUE INDEX "organizations_slug_key" ON "organizations"("slug");
 CREATE UNIQUE INDEX "organizations_github_installation_id_key" ON "organizations"("github_installation_id");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "authorized_apps_installation_id_key" ON "authorized_apps"("installation_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "authorized_apps_organization_id_key" ON "authorized_apps"("organization_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "users_github_id_key" ON "users"("github_id");
 
 -- CreateIndex
@@ -157,7 +182,7 @@ CREATE INDEX "ai_reviews_pull_request_id_status_idx" ON "ai_reviews"("pull_reque
 ALTER TABLE "job_audits" ADD CONSTRAINT "job_audits_pull_request_id_fkey" FOREIGN KEY ("pull_request_id") REFERENCES "pull_requests"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "users" ADD CONSTRAINT "users_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "users" ADD CONSTRAINT "users_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "repositories" ADD CONSTRAINT "repositories_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

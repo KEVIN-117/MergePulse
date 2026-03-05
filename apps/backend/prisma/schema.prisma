@@ -63,6 +63,17 @@ model Organization {
   @@map("organizations")
 }
 
+model AuthorizedApp {
+  id             String @id @default(uuid())
+  installationId String @unique @map("installation_id")
+  organizationId String @unique @map("organization_id")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("authorized_apps")
+}
+
 model User {
   id             String   @id @default(uuid())
   githubId       String   @unique @map("github_id")
@@ -72,8 +83,8 @@ model User {
   avatarUrl      String?  @map("avatar_url")
   email          String?
 
-  organizationId String       @map("organization_id")
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String?       @map("organization_id")
+  organization   Organization? @relation(fields: [organizationId], references: [id])
 
   // Relación inversa necesaria para que Prisma funcione
   pullRequests PullRequest[]
@@ -87,9 +98,14 @@ model User {
 }
 
 model Repository {
-  id           String @id @default(uuid())
-  githubRepoId String @unique @map("github_repo_id")
+  id           String     @id @default(uuid())
+  githubRepoId String     @unique @map("github_repo_id")
   name         String
+  description  String?
+  url          String?
+  stars        Int?
+  forks        Int?
+  visibility   Visibility @default(PUBLIC)
 
   organizationId String       @map("organization_id")
   organization   Organization @relation(fields: [organizationId], references: [id])
@@ -100,6 +116,11 @@ model Repository {
 
   @@index([organizationId])
   @@map("repositories")
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
 }
 
 model PullRequest {
