@@ -271,7 +271,6 @@ export class WebhooksService {
 
   async handleInstallationRepositoriesEvent(payload: InstallationRepositoriesPayload) {
     const { action, installation, repositories_added, repositories_removed, repository_selection } = payload;
-    console.log("payload", JSON.stringify(payload, null, 2));
 
     if (!installation.id) {
       throw new UnauthorizedException("Installation not found");
@@ -283,9 +282,6 @@ export class WebhooksService {
         githubInstallationId: `${installation.id}`
       }
     })
-
-    console.log(installation.id, organization?.githubInstallationId);
-
 
     if (!organization) {
       throw new UnauthorizedException("Organization not found");
