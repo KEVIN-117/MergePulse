@@ -5,9 +5,20 @@ export function verifySignature(signature: string, payload: string, secret: stri
     hmac.update(payload);
     const expectedSignature = `sha256=${hmac.digest('hex')}`;
 
-    try {
-        return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
-    } catch (error) {
+    const signatureBuffer = Buffer.from(signature);
+    const expectedSignatureBuffer = Buffer.from(expectedSignature);
+
+    if (signatureBuffer.length !== expectedSignatureBuffer.length) {
         return false;
+    }
+
+    try {
+        return crypto.timingSafeEqual(signatureBuffer, expectedSignatureBuffer);
+    } catch (error) {
+        const err = error as Error;
+        console.error('verifySignature: unexpected error during timingSafeEqual', {
+            name: err.name,
+            message: err.message,
+        });
     }
 }

@@ -26,7 +26,6 @@ export class AuthService {
   }
 
   async handleGithubCallback(githubUser: GithubAuthUser): Promise<AuthResponse> {
-    console.log("githubUser", JSON.stringify(githubUser, null, 2));
     const installations = await this.fetchUserInstallations(githubUser.accessToken);
 
     let organizationId: string | null = null;
@@ -162,6 +161,9 @@ export class AuthService {
         githubInstallationId: installationId,
       },
       update: {
+        name: accountLogin,
+        slug: normalizedSlug,
+        updatedAt: new Date(),
       },
     });
   }
@@ -196,14 +198,14 @@ export class AuthService {
   private signSessionJwt(payload: SessionJwtPayload): Promise<string> {
     return this.jwtService.signAsync(payload, {
       expiresIn: '1d',
-      secret: this.configService.get<string>('JWT_SECRET') as string,
+      secret: this.configService.getOrThrow<string>('JWT_SECRET'),
     });
   }
 
   private refreshToken(payload: SessionJwtPayload): Promise<string> {
     return this.jwtService.signAsync(payload, {
       expiresIn: '7d',
-      secret: this.configService.get<string>('REFRESH_TOKEN_SECRET') as string,
+      secret: this.configService.getOrThrow<string>('REFRESH_TOKEN_SECRET'),
     });
   }
 
@@ -240,21 +242,20 @@ export class AuthService {
     );
   }
 
-  private getGithubAppPrivateKey(): string {
+  getGithubAppPrivateKey(): string {
     const privateKey =
-      this.configService.get<string>('GITHUB_APP_PRIVATE_KEY') ||
-      this.configService.get<string>('GITHUB_PRIVATE_KEY');
+      this.configService.get<string>('GITHUB_APP_PRIVATE_KEY');
 
     if (!privateKey) {
       throw new UnauthorizedException(
-        'Missing GITHUB_APP_PRIVATE_KEY (or GITHUB_PRIVATE_KEY) environment variable.',
+        'Missing GITHUB_APP_PRIVATE_KEY environment variable.',
       );
     }
 
     return privateKey;
   }
 
-  private generateAppJwt(): string {
+  generateAppJwt(): string {
     const now = Math.floor(Date.now() / 1000);
     const payload = {
       iat: now - 60,
@@ -262,6 +263,7 @@ export class AuthService {
       iss: this.configService.getOrThrow('GITHUB_APP_ID')
     };
     const privateKey = this.getGithubAppPrivateKey().replace(/\\n/g, '\n');
+
     return this.jwtService.sign(payload, { algorithm: 'RS256', privateKey });
   }
 }

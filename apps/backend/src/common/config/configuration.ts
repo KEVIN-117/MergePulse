@@ -1,20 +1,20 @@
-import { backendEnvs } from "@repo/validation";
+import { getBackendEnvs } from "@repo/validation";
 
 export default {
-    port: parseInt(backendEnvs.PORT),
+    port: parseInt(getBackendEnvs().PORT),
     database: {
-        url: backendEnvs.DATABASE_URL,
+        url: getBackendEnvs().DATABASE_URL,
     },
     github: {
-        clientId: backendEnvs.GITHUB_CLIENT_ID,
-        clientSecret: backendEnvs.GITHUB_CLIENT_SECRET,
-        appId: backendEnvs.GITHUB_APP_ID,
-        privateKey: backendEnvs.GITHUB_PRIVATE_KEY,
-        callbackUrl: backendEnvs.GITHUB_CALLBACK_URL,
-        apiUrl: backendEnvs.GITHUB_API_URL,
-        webhookSecret: backendEnvs.GITHUB_WEBHOOK_SECRET,
+        clientId: getBackendEnvs().GITHUB_CLIENT_ID,
+        clientSecret: getBackendEnvs().GITHUB_CLIENT_SECRET,
+        appId: getBackendEnvs().GITHUB_APP_ID,
+        privateKey: getBackendEnvs().GITHUB_PRIVATE_KEY,
+        callbackUrl: getBackendEnvs().GITHUB_CALLBACK_URL,
+        apiUrl: getBackendEnvs().GITHUB_API_URL,
+        webhookSecret: getBackendEnvs().GITHUB_WEBHOOK_SECRET,
     },
     jwt: {
-        secret: backendEnvs.JWT_SECRET,
+        secret: getBackendEnvs().JWT_SECRET,
     },
 }

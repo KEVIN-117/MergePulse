@@ -30,12 +30,8 @@ export class WebhooksController {
       return this.webhooksService.handlePullRequestReviewComment(payload);
     }
 
-    if (event === 'pull_request_review_comment') {
-      return this.webhooksService.handlePullRequestReviewComment(payload);
-    }
-
     if (event === 'installation_repositories') {
-      console.log("installation_repositories", JSON.stringify(payload, null, 2));
+      console.log("Installation repositories event received");
       const response = await this.webhooksService.handleInstallationRepositoriesEvent(payload);
       return response;
     }

@@ -1,17 +1,6 @@
 "use server";
 
-/*
-return {
-      accessToken,
-      tokenType: 'Bearer',
-      user: {
-        id: user.id,
-        githubUsername: user.githubUsername,
-        organizationId: user.organizationId,
-        role: user.role,
-      },
-    };
-*/
+import { redirect } from "next/navigation";
 
 interface AuthResponse {
     accessToken: string;
@@ -31,7 +20,8 @@ export async function login() {
     // response is html page with login form
     // redirect to login page
     if (response.status === 302) {
-        window.location.href = response.headers.get("Location") as string;
+        const location = response.headers.get("Location") as string
+        redirect(location)
     }
 
     // const data = await response.json() as AuthResponse;

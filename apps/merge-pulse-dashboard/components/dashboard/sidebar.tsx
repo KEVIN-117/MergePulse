@@ -179,10 +179,10 @@ export function DashboardSidebar({
             render={
               <button className="flex items-center gap-2.5 w-full hover:bg-sidebar-accent rounded-md p-1 -m-1 transition-colors shrink-0">
                 <div className="flex size-7 items-center justify-center rounded-lg bg-foreground text-background shrink-0">
-                  <span className="text-sm font-bold">S</span>
+                  <span className="text-sm font-bold">MP</span>
                 </div>
                 <div className="flex items-center gap-1 group-data-[collapsible=icon]:hidden">
-                  <span className="text-sm font-medium">Square UI</span>
+                  <span className="text-sm font-medium">MergePulse</span>
                   <HugeiconsIcon icon={UnfoldMoreIcon} className="size-3 text-muted-foreground" />
                 </div>
               </button>
@@ -263,29 +263,6 @@ export function DashboardSidebar({
 
       <SidebarFooter className="px-2.5 pb-3 group-data-[collapsible=icon]:hidden">
         <div className="group/sidebar relative flex flex-col gap-2 rounded-lg border p-4 text-sm w-full bg-background">
-          <div className="text-balance text-lg font-semibold leading-tight group-hover/sidebar:underline">
-            Open-source layouts by lndev-ui
-          </div>
-          <div className="text-muted-foreground">
-            Collection of beautifully crafted open-source layouts UI built with
-            shadcn/ui.
-          </div>
-          <Link
-            target="_blank"
-            rel="noreferrer"
-            className="absolute inset-0"
-            href="https://square.lndev.me"
-          >
-            <span className="sr-only">Square by lndev-ui</span>
-          </Link>
-          <Link
-            href="https://square.lndev.me"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center h-8 w-full px-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/80 transition-colors"
-          >
-            square.lndev.me
-          </Link>
         </div>
       </SidebarFooter>
     </Sidebar>

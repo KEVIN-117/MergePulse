@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
 import { UpdateWebhookDto } from './dto/update-webhook.dto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -6,6 +6,8 @@ import { PrStatus, User, UserRole, Visibility } from '@prisma/client';
 import { GithubAuthUser } from '../auth/types/github-auth-user.interface';
 import { UserService } from '../user/user.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
+import { AuthService } from '../auth/auth.service';
+import { ConfigService } from '@nestjs/config';
 
 interface PullRequestPayload {
   action: string;
@@ -193,10 +195,54 @@ interface InstallationRepositoriesPayload {
   repository_selection: 'all' | 'selected'
 }
 
+interface Collaborator {
+  login: string;
+  id: number;
+  avatar_url: string;
+  url: string;
+  role_name: string;
+}
+
+interface GitHubUserDetails {
+  login: string;
+  id: number;
+  node_id: string;
+  avatar_url: string;
+  gravatar_id: string;
+  url: string;
+  html_url: string;
+  followers_url: string;
+  following_url: string;
+  gists_url: string;
+  starred_url: string;
+  subscriptions_url: string;
+  organizations_url: string;
+  repos_url: string;
+  events_url: string;
+  received_events_url: string;
+  type: string;
+  user_view_type: string;
+  site_admin: boolean;
+  name: string;
+  company: string | null;
+  blog: string;
+  location: string | null;
+  email: string | null;
+  hireable: string | null;
+  bio: string | null;
+  twitter_username: string | null;
+  public_repos: number;
+  public_gists: number;
+  followers: number;
+  following: number;
+  created_at: string;
+  updated_at: string;
+}
+
 @Injectable()
 export class WebhooksService {
 
-  constructor(private readonly prisma: PrismaService, private readonly userService: UserService) { }
+  constructor(private readonly prisma: PrismaService, private readonly userService: UserService, private readonly authService: AuthService, private readonly configService: ConfigService) { }
 
   async handlePullRequest(payload: PullRequestPayload) {
     const { action, pull_request: pr, repository: repo, installation } = payload;
@@ -274,7 +320,6 @@ export class WebhooksService {
 
     if (!installation.id) {
       throw new UnauthorizedException("Installation not found");
-      return;
     }
 
     const organization = await this.prisma.organization.findUnique({
@@ -285,7 +330,6 @@ export class WebhooksService {
 
     if (!organization) {
       throw new UnauthorizedException("Organization not found");
-      return;
     }
 
     if (action === 'added') {
@@ -304,10 +348,17 @@ export class WebhooksService {
             visibility: repo.private ? Visibility.PRIVATE : Visibility.PUBLIC,
           },
         });
+        const repoOwner = repo.full_name.split('/')[0];
+
+        await this.syncRepositoryCollaborators(organization.githubInstallationId, repoOwner, repo.name, organization.id);
       }
     }
 
     if (action === 'removed') {
+      if (repositories_removed.length === 0) {
+        return { message: 'Ignored: No repositories removed' };
+      }
+
       for (const repo of repositories_removed) {
         await this.prisma.repository.delete({
           where: { githubRepoId: String(repo.id) },
@@ -320,6 +371,95 @@ export class WebhooksService {
     };
   }
 
+  async getInstallationAccessToken(installationId: string): Promise<string> {
+    try {
+      // 1. Generamos el JWT usando el método que ya habías construido
+      const appJwt = this.authService.generateAppJwt();
+
+      const githubApiUrl = this.configService.get<string>('GITHUB_API_URL') as string;
+
+      // 2. Hacemos un POST a GitHub pidiendo las llaves para esta instalación
+      const response = await fetch(`${githubApiUrl}/app/installations/${installationId}/access_tokens`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${appJwt}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error('No se pudo generar el token de instalación de GitHub');
+      }
+
+      const data = await response.json();
+
+      return data.token;
+
+    } catch (error) {
+      throw new InternalServerErrorException('Error de comunicación con GitHub');
+    }
+  }
+
+  private async syncRepositoryCollaborators(installationId: string, owner: string, repoName: string, organizationId: string) {
+    const githubAccessToken = await this.getInstallationAccessToken(installationId);
+    const githubApiUrl = this.configService.get<string>('GITHUB_API_URL') as string;
+    try {
+      const response = await fetch(`${githubApiUrl}/repos/${owner}/${repoName}/collaborators`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${githubAccessToken}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error('No se pudo obtener la lista de colaboradores del repositorio');
+      }
+
+      const collaborators = await response.json() as Collaborator[];
+
+      for (const collaborator of collaborators) {
+        const res = await fetch(`${githubApiUrl}/users/${collaborator.login}`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${githubAccessToken}`,
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+          },
+        });
+
+        const githubUserDetails = await res.json() as GitHubUserDetails;
+
+        await this.prisma.user.upsert({
+          where: { githubId: String(collaborator.id) },
+          create: {
+            githubId: String(collaborator.id),
+            githubUsername: collaborator.login,
+            displayName: githubUserDetails.name,
+            email: githubUserDetails.email,
+            avatarUrl: githubUserDetails.avatar_url,
+            lastLoginAt: new Date(),
+            organizationId: organizationId,
+            role: UserRole.DEVELOPER,
+          },
+          update: {
+            githubUsername: collaborator.login,
+            displayName: githubUserDetails.name,
+            email: githubUserDetails.email,
+            avatarUrl: githubUserDetails.avatar_url,
+          },
+        });
+      }
+    } catch (error) {
+      throw new InternalServerErrorException('Error de comunicación con GitHub');
+    }
+
+  }
+
   private determinePrStatus(state: string, merged: boolean): PrStatus {
     if (merged) return PrStatus.MERGED;
     if (state === 'closed') return PrStatus.CLOSED;
@@ -327,11 +467,11 @@ export class WebhooksService {
   }
 
   handlePullRequestReview(payload: any) {
-    console.log("payload", payload);
+    console.log("Handling pull request review");
   }
 
   handlePullRequestReviewComment(payload: any) {
-    console.log("payload", payload);
+    console.log("Handling pull request review comment");
   }
 
   private async verifiyUser(githubId: string, organizationId: string) {
@@ -341,9 +481,7 @@ export class WebhooksService {
         organizationId,
       },
     });
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
+
     return user;
   }
   private async upsertUser(

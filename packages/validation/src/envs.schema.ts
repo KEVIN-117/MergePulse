@@ -50,5 +50,19 @@ export const backendEnvsSchema = z.object({
     GITHUB_WEBHOOK_SECRET: z.string(),
 })
 
-export const globalEnvs = globalEnvsSchema.parse(process.env);
-export const backendEnvs = backendEnvsSchema.parse(process.env);
+let _globalEnvs: GlobalEnvs | undefined;
+let _backendEnvs: BackendEnvs | undefined;
+
+export function getGlobalEnvs(): GlobalEnvs {
+    if (!_globalEnvs) {
+        _globalEnvs = globalEnvsSchema.parse(process.env);
+    }
+    return _globalEnvs;
+}
+
+export function getBackendEnvs(): BackendEnvs {
+    if (!_backendEnvs) {
+        _backendEnvs = backendEnvsSchema.parse(process.env);
+    }
+    return _backendEnvs;
+}

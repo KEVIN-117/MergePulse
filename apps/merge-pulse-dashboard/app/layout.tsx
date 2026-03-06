@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dashboard - Square UI",
-  description: "A modern dashboard with dashboard management",
+  title: "Dashboard - MergePulse",
+  description: "A modern dashboard for managing your GitHub repositories and pull requests",
 };
 
 export default function RootLayout({

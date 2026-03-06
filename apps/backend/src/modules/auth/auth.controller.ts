@@ -38,7 +38,7 @@ export class AuthController {
   @Get('github/install')
   @UseGuards(JwtAuthGuard)
   installApp(@Res() res: Response) {
-    const githubAppSlug = this.configService.get<string>('GITHUB_APP_SLUG');
+    const githubAppSlug = this.configService.getOrThrow<string>('GITHUB_APP_SLUG');
     const url = `https://github.com/apps/${githubAppSlug}/installations/new`;
     res.redirect(url);
   }
@@ -55,7 +55,8 @@ export class AuthController {
     const user = req.user;
 
     await this.authService.handleAppInstallation({ installationId, action, userId: user.id });
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard?onboarding=complete`);
+    const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL');
+    res.redirect(`${frontendUrl}/dashboard?onboarding=complete`);
   }
 
   @Get('github/logout')
