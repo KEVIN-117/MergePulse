@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client";
 
 export interface SessionJwtPayload {
   userId: string;
-  orgId: string;
+  orgId?: string;
   role: UserRole;
+  githubUsername: string;
 }
