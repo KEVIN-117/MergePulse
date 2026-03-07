@@ -1,13 +1,11 @@
 import { Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
-import { CreateWebhookDto } from './dto/create-webhook.dto';
-import { UpdateWebhookDto } from './dto/update-webhook.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PrStatus, User, UserRole, Visibility } from '@prisma/client';
-import { GithubAuthUser } from '../auth/types/github-auth-user.interface';
 import { UserService } from '../user/user.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { AuthService } from '../auth/auth.service';
 import { ConfigService } from '@nestjs/config';
+import { AiQueueService } from '../ai-queue/ai-queue.service';
 
 interface PullRequestPayload {
   action: string;
@@ -242,13 +240,12 @@ interface GitHubUserDetails {
 @Injectable()
 export class WebhooksService {
 
-  constructor(private readonly prisma: PrismaService, private readonly userService: UserService, private readonly authService: AuthService, private readonly configService: ConfigService) { }
+  constructor(private readonly prisma: PrismaService, private readonly userService: UserService, private readonly authService: AuthService, private readonly configService: ConfigService, private readonly aiQueueService: AiQueueService) { }
 
   async handlePullRequest(payload: PullRequestPayload) {
     const { action, pull_request: pr, repository: repo, installation } = payload;
     if (!installation.id) {
       throw new UnauthorizedException("Installation not found");
-      return;
     }
 
     const organization = await this.prisma.organization.findUnique({
@@ -259,7 +256,6 @@ export class WebhooksService {
 
     if (!organization) {
       throw new UnauthorizedException("Organization not found");
-      return;
     }
 
     const repository = await this.prisma.repository.findUnique({
@@ -307,7 +303,8 @@ export class WebhooksService {
 
     if (action === 'opened' || action === 'synchronize') {
       // AQUÍ: En el siguiente ticket conectaremos BullMQ para encolar el trabajo
-      // await this.aiQueueService.addReviewJob(pullRequest.id);
+
+      await this.aiQueueService.queueReview(pullRequest.id, user.id, repository.id, organization.githubInstallationId);
     }
 
     return {
