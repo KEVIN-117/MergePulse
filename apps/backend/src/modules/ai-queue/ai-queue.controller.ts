@@ -7,12 +7,12 @@ export class AiQueueModuleController {
   constructor(private readonly aiQueueService: AiQueueService) { }
 
   @Post('prs/:pullRequestId/review')
-  queueReview(@Query() pullRequestId: string, @Body() createAiQueueModuleDto: CreateAiQueueDto,) {
+  queueReview(@Param('pullRequestId') pullRequestId: string, @Body() createAiQueueDto: CreateAiQueueDto,) {
     return this.aiQueueService.queueReview(
       pullRequestId,
-      createAiQueueModuleDto.userId,
-      createAiQueueModuleDto.repositoryId,
-      createAiQueueModuleDto.githubInstallationId,
+      createAiQueueDto.userId,
+      createAiQueueDto.repositoryId,
+      createAiQueueDto.githubInstallationId,
     );
   }
 

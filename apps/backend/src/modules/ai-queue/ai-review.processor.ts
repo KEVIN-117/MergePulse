@@ -1,10 +1,8 @@
 import { OnWorkerEvent, Processor, WorkerHost } from "@nestjs/bullmq";
 import { Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { ReviewStatus } from "@prisma/client";
 import { Job } from "bullmq";
 import { PrismaService } from "src/prisma/prisma.service";
-import { WebhooksService } from "../webhooks/webhooks.service";
 
 
 @Processor('ai-reviews')
@@ -59,7 +57,7 @@ export class AiReviewProcessor extends WorkerHost {
         const prNumber = pullRequest.number
 
         this.logger.log(`🔑 Obteniendo token de acceso para la instalación ${installationId}...`);
-        // const token = await this.webHookService.getInstallationAccessToken(installationId);
+
         this.logger.log(`📥 Descargando código del PR #${prNumber} de ${repoFullName}...`);
 
         await new Promise(resolve => setTimeout(resolve, 5000));
@@ -85,6 +83,11 @@ export class AiReviewProcessor extends WorkerHost {
     async onFailed(job: Job | undefined, error: Error): Promise<void> {
         const jobId = job ? job.id : 'desconocido';
         const reviewId = job?.data?.aiReviewId;
+
+        if (!reviewId) {
+            this.logger.error(`❌ Trabajo fallido [ID: ${jobId}]: ${error.message}`, error.stack);
+            return;
+        }
         this.logger.error(`❌ Trabajo fallido [ID: ${jobId}]: ${error.message}`, error.stack);
         await this.prisma.aiReview.update({
             where: {

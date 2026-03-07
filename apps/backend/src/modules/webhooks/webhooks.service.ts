@@ -1,9 +1,6 @@
 import { Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
-import { CreateWebhookDto } from './dto/create-webhook.dto';
-import { UpdateWebhookDto } from './dto/update-webhook.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PrStatus, User, UserRole, Visibility } from '@prisma/client';
-import { GithubAuthUser } from '../auth/types/github-auth-user.interface';
 import { UserService } from '../user/user.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { AuthService } from '../auth/auth.service';

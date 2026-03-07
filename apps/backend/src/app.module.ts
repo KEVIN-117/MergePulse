@@ -9,7 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { UserModule } from './modules/user/user.module';
 import { RepositoriesModule } from './modules/repositories/repositories.module';
-import { AiQueueModuleModule } from './modules/ai-queue/ai-queue.module';
+import { AiQueueModule } from './modules/ai-queue/ai-queue.module';
 import { BullModule } from '@nestjs/bullmq';
 
 @Module({
@@ -21,9 +21,7 @@ import { BullModule } from '@nestjs/bullmq';
       useFactory: (configService: ConfigService) => ({
         connection: {
           host: configService.get<string>('BULLMQ_HOST'),
-          port: configService.get<number>('BULLMQ_PORT'),
-          password: configService.get<string>('BULLMQ_PASSWORD'),
-          db: configService.get<number>('BULLMQ_DB'),
+          port: Number(configService.get<string>('BULLMQ_PORT')),
         },
       }),
     }),
@@ -34,7 +32,7 @@ import { BullModule } from '@nestjs/bullmq';
     WebhooksModule,
     UserModule,
     RepositoriesModule,
-    AiQueueModuleModule
+    AiQueueModule
   ],
   controllers: [AppController],
   providers: [AppService],
