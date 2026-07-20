@@ -11,6 +11,8 @@ import { UserModule } from './modules/user/user.module';
 import { RepositoriesModule } from './modules/repositories/repositories.module';
 import { AiQueueModule } from './modules/ai-queue/ai-queue.module';
 import { BullModule } from '@nestjs/bullmq';
+import { AiModule } from './modules/ai-engine/ai.module';
+import { GithubApiModule } from './modules/github-api/github-api.module';
 
 @Module({
   imports: [
@@ -32,7 +34,9 @@ import { BullModule } from '@nestjs/bullmq';
     WebhooksModule,
     UserModule,
     RepositoriesModule,
-    AiQueueModule
+    AiQueueModule,
+    AiModule,
+    GithubApiModule
   ],
   controllers: [AppController],
   providers: [AppService],

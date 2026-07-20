@@ -3,9 +3,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { PrStatus, User, UserRole, Visibility } from '@prisma/client';
 import { UserService } from '../user/user.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
-import { AuthService } from '../auth/auth.service';
 import { ConfigService } from '@nestjs/config';
 import { AiQueueService } from '../ai-queue/ai-queue.service';
+import { GithubApiService } from '../github-api/github-api.service';
 
 interface PullRequestPayload {
   action: string;
@@ -240,7 +240,7 @@ interface GitHubUserDetails {
 @Injectable()
 export class WebhooksService {
 
-  constructor(private readonly prisma: PrismaService, private readonly userService: UserService, private readonly authService: AuthService, private readonly configService: ConfigService, private readonly aiQueueService: AiQueueService) { }
+  constructor(private readonly prisma: PrismaService, private readonly userService: UserService, private readonly githubApiService: GithubApiService, private readonly configService: ConfigService, private readonly aiQueueService: AiQueueService) { }
 
   async handlePullRequest(payload: PullRequestPayload) {
     const { action, pull_request: pr, repository: repo, installation } = payload;
@@ -368,39 +368,8 @@ export class WebhooksService {
     };
   }
 
-  async getInstallationAccessToken(installationId: string): Promise<string> {
-    try {
-      // 1. Generamos el JWT usando el método que ya habías construido
-      const appJwt = this.authService.generateAppJwt();
-
-      const githubApiUrl = this.configService.get<string>('GITHUB_API_URL') as string;
-
-      // 2. Hacemos un POST a GitHub pidiendo las llaves para esta instalación
-      const response = await fetch(`${githubApiUrl}/app/installations/${installationId}/access_tokens`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${appJwt}`,
-          Accept: 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error('No se pudo generar el token de instalación de GitHub');
-      }
-
-      const data = await response.json();
-
-      return data.token;
-
-    } catch (error) {
-      throw new InternalServerErrorException('Error de comunicación con GitHub');
-    }
-  }
-
   private async syncRepositoryCollaborators(installationId: string, owner: string, repoName: string, organizationId: string) {
-    const githubAccessToken = await this.getInstallationAccessToken(installationId);
+    const githubAccessToken = await this.githubApiService.getInstallationAccessToken(installationId);
     const githubApiUrl = this.configService.get<string>('GITHUB_API_URL') as string;
     try {
       const response = await fetch(`${githubApiUrl}/repos/${owner}/${repoName}/collaborators`, {
